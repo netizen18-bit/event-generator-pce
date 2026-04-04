@@ -226,6 +226,7 @@ const FlyerGenerator = () => {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [composedFlyer, setComposedFlyer] = useState("");
   const [status, setStatus] = useState("");
+  const [apiPrompt, setApiPrompt] = useState("");
 
   const update = (field: keyof typeof formData, value: string) => {
     setFormData((previous) => ({ ...previous, [field]: value }));
@@ -456,6 +457,7 @@ const FlyerGenerator = () => {
     setIsGenerating(true);
     setStatus("");
     setComposedFlyer("");
+    setApiPrompt("");
 
     try {
       const selectedThemeBackground = randomThemeBackground(formData.theme);
@@ -473,14 +475,14 @@ const FlyerGenerator = () => {
     setIsAiGenerating(true);
     setStatus("");
     setComposedFlyer("");
+    setApiPrompt("");
 
     try {
       const result = await api.generateFlyer({
-        aiMode: "background",
+        aiMode: "full-flyer",
+        generateFullFlyer: true,
         collegeName: formData.collegeName || PCE_DEFAULT_NAME,
         clubName: formData.clubName,
-        collegeLogoPath: PCE_LOGO_PATH,
-        clubLogoPath: selectedClub.logoPath,
         theme: formData.theme,
         style: formData.style,
         eventTitle: formData.eventTitle,
@@ -492,16 +494,18 @@ const FlyerGenerator = () => {
         contactNumbers: formData.contactNumbers,
       });
 
-      const aiBackgroundBase64 = result.backgroundBase64 || result.imageBase64 || result.fullFlyerBase64;
-      const aiBackgroundContentType = result.backgroundContentType || result.fullFlyerContentType || "image/png";
+      setApiPrompt(result.prompt || "");
+
+      const aiBackgroundBase64 = result.fullFlyerBase64 || result.imageBase64 || result.backgroundBase64;
+      const aiBackgroundContentType = result.fullFlyerContentType || result.backgroundContentType || "image/png";
 
       if (aiBackgroundBase64) {
         await composeFlyer({
           backgroundSource: toImageDataUrl(aiBackgroundBase64, aiBackgroundContentType),
-          overlayOpacity: 0.26,
-          renderEventText: true,
+          overlayOpacity: 0,
+          renderEventText: false,
         });
-        setStatus(result.message || "AI background generated with Pollinations and details rendered clearly.");
+        setStatus(result.message || "AI flyer generated with Pollinations and official logos overlaid.");
         return;
       }
 
@@ -661,6 +665,13 @@ const FlyerGenerator = () => {
                 <Download className="h-4 w-4" strokeWidth={2.5} />
                 Download Poster
               </a>
+            ) : null}
+
+            {apiPrompt ? (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider">Prompt Sent To API</p>
+                <pre className="max-h-48 overflow-auto rounded-xl bg-muted/50 p-3 text-[11px] leading-relaxed whitespace-pre-wrap break-words">{apiPrompt}</pre>
+              </div>
             ) : null}
           </div>
 

@@ -117,7 +117,7 @@ Required layout order:
 2) Immediately below: ${clubName}
 3) Main headline in very large font (once only): ${eventTitle}
 4) Mid section heading: Event Details
-5) Mid section body text:
+5) Mid section body text (clear, readable, normal English):
 ${details}
 ${summary}
 6) Near bottom line: Date & Time: ${date} ${time} | Venue: ${venue}
@@ -126,9 +126,10 @@ ${summary}
 Design requirements:
 - High contrast typography on clean background
 - Strong visual hierarchy and ample spacing
-- Use only the exact event text above; do not invent, repeat, or paraphrase major headings
-- Do not repeat the title multiple times
-- No logos, no emblems, no badges, no watermarks
+- Use only the exact event text above; do not invent extra headings
+- Do not repeat the title multiple times or as a background watermark
+- Do not include any logos, emblems, badges, seals, or watermarks in the generated image
+- Keep spelling clear and legible, avoid distorted or broken words
 - No gibberish, no random symbols, no mirrored text
 - Print-ready poster quality
 `.trim();
