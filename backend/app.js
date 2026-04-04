@@ -6,7 +6,8 @@ import { bufferToBase64 } from "./utils.js";
 import { generateBudgetEstimationDocument, generateBudgetReportDocument, generateProposalDocument, generateReportDocument } from "./services/documents.js";
 import { readBudgetStore, writeBudgetStore } from "./services/budgetStore.js";
 import { analyzeBudget, analyzeBudgetFolder, buildTimeline, compilePostEventSummary, estimateBudgetFromHistory, parseBudgetCsv } from "./services/planning.js";
-
+import { parseAttendanceFile, buildAttendancePdf } from "./services/attendance.js";
+import { readAttendanceStore, saveAttendanceRoster } from "./services/attendanceStore.js";
 import { generateFlyerConcept } from "./services/flyers.js";
 
 const app = express();
@@ -105,6 +106,66 @@ app.post("/api/flyers/generate", async (req, res, next) => {
   }
 });
 
+app.post("/api/attendance/parse", upload.single("file"), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "A CSV or Excel file is required." });
+    }
+
+    const selectedYear = String(req.body?.year || "").trim();
+    const selectedBranch = String(req.body?.branch || "").trim();
+    const selectedDivision = String(req.body?.division || "").trim();
+    const parsed = parseAttendanceFile(req.file.buffer, req.file.originalname, {
+      selectedYear,
+      selectedBranch,
+      selectedDivision,
+    });
+    res.json(parsed);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/attendance/save", async (req, res, next) => {
+  try {
+    const students = Array.isArray(req.body?.students) ? req.body.students : [];
+    const metadata = req.body?.metadata && typeof req.body.metadata === "object" ? req.body.metadata : {};
+    const fileName = String(req.body?.fileName || metadata.sourceFile || "Uploaded roster");
+
+    if (students.length === 0) {
+      return res.status(400).json({ message: "There are no parsed students to save." });
+    }
+
+    const roster = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      fileName,
+      uploadedAt: new Date().toISOString(),
+      students,
+      metadata,
+    };
+
+    await saveAttendanceRoster(roster);
+    res.json({ roster });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/attendance/rosters", async (_req, res, next) => {
+  try {
+    res.json(await readAttendanceStore());
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/attendance/export", async (req, res, next) => {
+  try {
+    res.json(await buildAttendancePdf(req.body));
+  } catch (error) {
+    next(error);
+  }
+});
 
 
 app.post("/api/budget/analyze", (req, res) => {
