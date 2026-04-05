@@ -497,6 +497,65 @@ const FlyerGenerator = () => {
     }
   };
 
+  const generateAiFlyer = async () => {
+    setIsAiGenerating(true);
+    setStatus("");
+    setComposedFlyer("");
+    setApiPrompt("");
+
+    try {
+      const result = await api.generateFlyer({
+        aiMode: "full-flyer",
+        generateFullFlyer: true,
+        collegeName: formData.collegeName || PCE_DEFAULT_NAME,
+        clubName: formData.clubName,
+        theme: formData.theme,
+        style: formData.style,
+        eventTitle: formData.eventTitle,
+        date: formData.date,
+        time: formData.time,
+        venue: formData.venue,
+        details: formData.details,
+        summary: formData.summary,
+        contactNumbers: formData.contactNumbers,
+      });
+
+      setApiPrompt(result.prompt || "");
+
+      const aiBackgroundBase64 = result.fullFlyerBase64 || result.imageBase64 || result.backgroundBase64;
+      const aiBackgroundContentType = result.fullFlyerContentType || result.backgroundContentType || "image/png";
+
+      if (aiBackgroundBase64) {
+        await composeFlyer({
+          backgroundSource: toImageDataUrl(aiBackgroundBase64, aiBackgroundContentType),
+          overlayOpacity: 0,
+          renderEventText: false,
+          enforceTemplateReadability: false,
+        });
+        setStatus(result.message || "AI full flyer generated with Pollinations and logos overlaid.");
+        return;
+      }
+
+      if (String(result.message || "").toLowerCase().includes("insufficient pollinations balance")) {
+        setStatus("Pollinations balance is low, so the AI full-flyer could not be generated. Top up pollen and try Generate AI Flyer again.");
+        return;
+      }
+
+      setStatus(result.message || "Pollinations did not return an image for this request.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate AI flyer.";
+
+      if (message.toLowerCase().includes("insufficient pollinations balance")) {
+        setStatus("Pollinations balance is low, so the AI full-flyer could not be generated. Top up pollen and try Generate AI Flyer again.");
+        return;
+      }
+
+      setStatus(message);
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 md:p-10">
       <motion.header className="mb-8 flex items-center justify-between" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
@@ -512,7 +571,7 @@ const FlyerGenerator = () => {
             {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2.5} /> : <Sparkles className="h-4 w-4" strokeWidth={3} />}
             Generate Poster
           </button>
-          <button onClick={generateFlyer} className="brutal-btn-outline flex items-center gap-2 px-4 py-2 text-xs" disabled={isGenerating || isAiGenerating}>
+          <button onClick={generateAiFlyer} className="brutal-btn-outline flex items-center gap-2 px-4 py-2 text-xs" disabled={isGenerating || isAiGenerating}>
             {isAiGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2.5} /> : <Sparkles className="h-4 w-4" strokeWidth={3} />}
             Generate AI Flyer
           </button>
