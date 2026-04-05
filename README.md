@@ -88,6 +88,45 @@ PORT=8787                                          # Backend port (default: 8787
 
 ---
 
+## 🛠️ Quick Start & Troubleshooting
+
+If you are having trouble opening or running the project, please follow these step-by-step instructions:
+
+1. **Open VS Code** in a new/empty folder and open the terminal.
+2. **Clone the repository**:
+   ```bash
+   git clone https://github.com/PranavTahsildar/Event_generator
+   cd Event_generator
+   ```
+3. **Install Dependencies**:
+   ```bash
+   npm install
+   npm install @supabase/supabase-js
+   ```
+4. **Start the Backend**:
+   Open a *new* terminal window (Terminal 2) and run:
+   ```bash
+   npm run server
+   ```
+5. **Start the Frontend**:
+   Go back to your *first* terminal window (Terminal 1) and run:
+   ```bash
+   npm run dev
+   ```
+6. **Open the Application**:
+   Click on the `http://localhost:...` link that appears in your frontend terminal.
+7. **Login**:
+   On the application screen, choose **Login as guest**.
+8. **Set up Environment Variables**:
+   In the main project folder, create a new file named `.env.local` and add your API keys:
+   ```env
+   GEMINI_API_KEY=your_key
+   POLLINATIONS_API_KEY=your_key
+   # Add any other required API keys here
+   ```
+
+---
+
 ## ▶️ Usage
 
 Run the frontend and backend in **two separate terminals** from the project root:
