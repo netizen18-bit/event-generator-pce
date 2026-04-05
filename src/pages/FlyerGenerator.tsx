@@ -502,10 +502,10 @@ const FlyerGenerator = () => {
       if (aiBackgroundBase64) {
         await composeFlyer({
           backgroundSource: toImageDataUrl(aiBackgroundBase64, aiBackgroundContentType),
-          overlayOpacity: 0,
-          renderEventText: false,
+          overlayOpacity: 0.12,
+          renderEventText: true,
         });
-        setStatus(result.message || "AI flyer generated with Pollinations and official logos overlaid.");
+        setStatus(result.message || "AI flyer background generated with Gemini and Pollinations; official details and logos overlaid for clarity.");
         return;
       }
 

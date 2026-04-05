@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { config } from "../config.js";
 
 const FLYER_WIDTH = 1024;
@@ -92,47 +93,70 @@ If monitors are present, keep screen content abstract and blurred without any ch
 `.trim();
 };
 
+const enhancePromptWithGemini = async (payload) => {
+  if (!config.geminiApiKey) {
+    return null;
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(config.geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const theme = payload.theme || "Technical";
+    const style = payload.style || "Minimal Modern";
+    const eventTitle = payload.eventTitle || "College Event";
+    const clubName = payload.clubName || "Student Club";
+
+    const prompt = `
+      You are an expert prompt engineer for AI image generators (like Midjourney or Flux).
+      The user wants to generate a high-quality, professional BACKGROUND for a vertical college event flyer.
+      
+      The event is titled "${eventTitle}" by "${clubName}".
+      Theme: ${theme}.
+      Style: ${style}.
+      
+      Write a highly detailed, atmospheric, and artistic image prompt (maximum 200 words).
+      Focus on:
+      - Cinematic lighting and composition for a vertical poster (9:16 aspect ratio).
+      - Textures, materials, and depth.
+      - Elements that reflect the theme "${theme}" and style "${style}".
+      - KEEP THE CENTER AND HEADER AREAS CLEAN (safe for text overlay).
+      - NO TEXT, NO LETTERS, NO TYPOGRAPHY, NO LOGOS. This is a background-only request.
+      - Use professional photography/digital art terminology (e.g., "bokeh", "unreal engine 5", "octane render", "8k", "hyper-realistic").
+
+      Return ONLY the expanded prompt text.
+    `.trim();
+
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Gemini enhance error:", error);
+    return null;
+  }
+};
+
 const buildFullFlyerPrompt = (payload) => {
   const theme = themes.includes(payload.theme) ? payload.theme : themes[0];
   const style = payload.style || "Minimal Modern";
-  const collegeName = normalizePromptField(payload.collegeName || "Pillai College of Engineering", 120);
-  const clubName = normalizePromptField(payload.clubName || "Club Name", 120);
   const eventTitle = normalizePromptField(payload.eventTitle || "Event Title", 140);
-  const date = normalizePromptField(payload.date || "Not specified", 80);
-  const time = normalizePromptField(payload.time || "Not specified", 80);
-  const venue = normalizePromptField(payload.venue || "Not specified", 120);
-  const details = normalizePromptField(payload.details || "Not specified", 300);
-  const summary = normalizePromptField(payload.summary || "Not specified", 220);
-  const contact = normalizePromptField(payload.contactNumbers || "Not specified", 120);
 
   return `
-Generate a single complete vertical college flyer with clean, readable English typography.
-Theme: ${theme}.
-Style: ${style}.
-${themeKeywords[theme] || ""}.
-${styleKeywords[style] || ""}.
-
-Required layout order:
-1) Top-center: ${collegeName}
-2) Immediately below: ${clubName}
-3) Main headline in very large font (once only): ${eventTitle}
-4) Mid section heading: Event Details
-5) Mid section body text (clear, readable, normal English):
-${details}
-${summary}
-6) Near bottom line: Date & Time: ${date} ${time} | Venue: ${venue}
-7) Bottom line: Contact: ${contact}
-
-Design requirements:
-- High contrast typography on clean background
-- Strong visual hierarchy and ample spacing
-- Use only the exact event text above; do not invent extra headings
-- Do not repeat the title multiple times or as a background watermark
-- Do not include any logos, emblems, badges, seals, or watermarks in the generated image
-- Keep spelling clear and legible, avoid distorted or broken words
-- No gibberish, no random symbols, no mirrored text
-- Print-ready poster quality
-`.trim();
+    Ultra-high-quality vertical background for a professional college event poster.
+    Artistic theme: ${theme}. Visual style: ${style}.
+    Event inspiration: ${eventTitle}.
+    ${themeKeywords[theme] || ""}.
+    ${styleKeywords[style] || ""}.
+    
+    Composition rules:
+    - Cinematic lighting, hyper-realistic details, and professional color grading.
+    - High-impact visual center but leave top and middle areas clean for text overlay.
+    - Smooth gradients and atmospheric depth.
+    
+    CRITICAL RESTRICTION:
+    - ABSOLUTELY NO TEXT, NO LETTERS, NO NUMBERS, NO TYPOGRAPHY, NO SIGNS, NO LOGOS, NO WATERMARKS.
+    - Do not include any readable characters or symbols on screens or backgrounds.
+    - Pure visual art only.
+  `.trim();
 };
 
 const buildPollinationsUrl = (baseUrl, prompt, seed, model) => {
@@ -276,7 +300,16 @@ const getPollinationsImage = async (prompt, seed) => {
 
 export const generateFlyerConcept = async (payload) => {
   const wantsFullFlyer = payload.aiMode === "full-flyer" || payload.generateFullFlyer === true;
-  const prompt = wantsFullFlyer ? buildFullFlyerPrompt(payload) : buildFlyerPrompt(payload);
+  
+  let prompt = wantsFullFlyer ? buildFullFlyerPrompt(payload) : buildFlyerPrompt(payload);
+  let enhancedByGemini = false;
+
+  // Use Gemini to make the prompt super high quality if possible
+  const enhancedPrompt = await enhancePromptWithGemini(payload);
+  if (enhancedPrompt) {
+    prompt = enhancedPrompt;
+    enhancedByGemini = true;
+  }
   const layout = {
     collegeName: payload.collegeName || "Pillai College of Engineering",
     clubName: payload.clubName || "Club Name",
@@ -293,10 +326,10 @@ export const generateFlyerConcept = async (payload) => {
 
     return {
       prompt,
-      provider: wantsFullFlyer ? "pollinations-full-flyer" : "pollinations-image",
+      provider: enhancedByGemini ? "gemini-pollinations" : (wantsFullFlyer ? "pollinations-full-flyer" : "pollinations-image"),
       status: "ready",
       layout,
-      message: `Generated with Pollinations (${generated.modelUsed}, seed ${seed}).`,
+      message: `Generated with Pollinations (${generated.modelUsed}, seed ${seed})${enhancedByGemini ? " using Gemini-enhanced prompting" : ""}.`,
       imageBase64: generated.imageBase64,
       fullFlyerContentType: wantsFullFlyer ? generated.contentType : null,
       fullFlyerBase64: wantsFullFlyer ? generated.imageBase64 : null,
