@@ -436,14 +436,14 @@ const AttendancePage = () => {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {[
-              ["collegeName", collegeName, setCollegeName, "College Name"],
-              ["collegeAddress", collegeAddress, setCollegeAddress, "College Address"],
-              ["clubName", clubName, setClubName, "Faculty / Club Name"],
-              ["eventTitle", eventTitle, setEventTitle, "Event Title / Subject"],
-            ].map(([key, value, setter, label]) => (
-              <div key={key}>
+              { id: "collegeName", value: collegeName, setter: setCollegeName, label: "College Name" },
+              { id: "collegeAddress", value: collegeAddress, setter: setCollegeAddress, label: "College Address" },
+              { id: "clubName", value: clubName, setter: setClubName, label: "Faculty / Club Name" },
+              { id: "eventTitle", value: eventTitle, setter: setEventTitle, label: "Event Title / Subject" },
+            ].map(({ id, value, setter, label }) => (
+              <div key={id}>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider">{label}</label>
-                <input className="brutal-input" value={value as string} onChange={(event) => (setter as (nextValue: string) => void)(event.target.value)} />
+                <input className="brutal-input" value={value} onChange={(event) => setter(event.target.value)} />
               </div>
             ))}
           </div>

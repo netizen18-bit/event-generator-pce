@@ -167,6 +167,7 @@ app.post("/api/attendance/export", async (req, res, next) => {
   }
 });
 
+
 app.post("/api/budget/analyze", (req, res) => {
   res.json(analyzeBudget(req.body));
 });
