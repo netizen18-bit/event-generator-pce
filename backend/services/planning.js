@@ -276,4 +276,4 @@ export const estimateBudgetFromHistory = async (payload) => {
     })),
     recommendations: result.recommendations,
   };
-};
+}; 

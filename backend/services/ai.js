@@ -158,7 +158,15 @@ const fallbackProposalParagraphs = (payload) => [
 ];
 
 const createReportPrompt = (payload) => {
-  const budgetApproved = payload.eventFee || payload.workshopFee ? `Rs. ${Number(payload.eventFee || payload.workshopFee).toLocaleString("en-IN")}` : "not provided";
+  const budgetApproved = payload.eventFee || payload.workshopFee ? `Rs. ${Number(payload.eventFee || payload.workshopFee).toLocaleString("en-IN")}` : "Not provided";
+  const analytics = payload.analyticsSummary || {};
+  const attendanceSummaryLines = Array.isArray(analytics.attendanceBreakdown) && analytics.attendanceBreakdown.length > 0
+    ? analytics.attendanceBreakdown.map((line) => `- ${clampText(line, 220)}`).join("\n")
+    : "- Attendance breakdown not available.";
+  const imageCaptions = safeStringList(payload.imageCaptions).slice(0, 8);
+  const imageLines = imageCaptions.length > 0
+    ? imageCaptions.map((caption, index) => `${index + 1}. ${caption}`).join("\n")
+    : "1. Event documentation photograph 1\n2. Event documentation photograph 2\n3. Event documentation photograph 3";
 
   return `
 You are preparing a formal college post-event report for PDF export.
@@ -219,7 +227,7 @@ Key highlights: ${safeStringList(payload.keyHighlights).join("; ") || "Not provi
 Attendance form / method: ${payload.attendanceForm || payload.attendanceFormLink || "Not provided"}
 Feedback details: ${payload.feedback || "Not provided"}
 Feedback form link: ${payload.feedbackFormLink || "Not provided"}
-Event fee / budget note: ${payload.eventFee ? `Rs. ${Number(payload.eventFee).toLocaleString("en-IN")}` : "Not provided"}
+Event fee / budget note: ${budgetApproved}
 
 Attendance analytics:
 - Registered participants: ${analytics.registeredCount ?? payload.participantsRegistered ?? "Not available"}

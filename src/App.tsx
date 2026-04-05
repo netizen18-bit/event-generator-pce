@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
-
+import { Footer } from "@/components/Footer";
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const ProposalGenerator = lazy(() => import("./pages/ProposalGenerator.tsx"));
@@ -27,6 +27,8 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage.tsx"));
 const TeamPage = lazy(() => import("./pages/TeamPage.tsx"));
 const AboutProjectPage = lazy(() => import("./pages/AboutProjectPage.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const FeedbackGeneratorPage = lazy(() => import("./pages/FeedbackGeneratorPage.tsx"));
+const FeedbackFormPage = lazy(() => import("./pages/FeedbackFormPage.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -41,7 +43,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/team" element={<TeamPage />} />
-              <Route path="/about" element={<AboutProjectPage />} />
               <Route
                 path="/dashboard"
                 element={

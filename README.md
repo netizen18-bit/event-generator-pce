@@ -88,6 +88,46 @@ PORT=8787                                          # Backend port (default: 8787
 
 ---
 
+## 🛠️ Quick Start & Troubleshooting
+
+If you are having trouble opening or running the project, please follow these step-by-step instructions:
+
+1. **Open VS Code** in a new/empty folder and open the terminal.
+2. **Clone the repository**:
+   ```bash
+   git clone https://github.com/PranavTahsildar/Event_generator
+   cd Event_generator
+   ```
+3. **Install Dependencies**:
+   ```bash
+   npm install
+   npm install @supabase/supabase-js
+   ```
+4. **Start the Backend**:
+   Open a *new* terminal window (Terminal 2) and run:
+   ```bash
+   npm run server
+   ```
+5. **Start the Frontend**:
+   Go back to your *first* terminal window (Terminal 1) and run:
+   ```bash
+   npm run dev
+   ```
+6. **Open the Application**:
+   Click on the `http://localhost:...` link that appears in your frontend terminal.
+7. **Login**:
+   On the application screen, choose **Login as guest**.
+8. **Set up Environment Variables**:
+   In the main project folder, create a new file named `.env.local` and add your API keys:
+   ```env
+   GEMINI_API_KEY=your_key
+   POLLINATIONS_API_KEY=your_key
+   POLLINATIONS_MODEL=flux
+   # Add any other required API keys here
+   ```
+
+---
+
 ## ▶️ Usage
 
 Run the frontend and backend in **two separate terminals** from the project root:
@@ -147,17 +187,32 @@ YouTube link here
 ---
 
 ## 👥 Team Members
-- Name 1
-- Name 2
-- Name 3
+- Manal Ulde  
+- Amey Zode 
+- Nancy Verma 
+- Rushabh Singh  
+- Aakash  Valliyil   
+- Pranav Tahsildar    
+- Sneha Yadav  
+- Yashika Singh  
+- Aryan Yadav 
+- Yedhukrishna Vijayan 
+- Vijayraghavan Udaiyar  
 
 ---
 
 ## 📌 GitHub Contributions
-- Name 1 – Contribution
-- Name 2 – Contribution
-- Name 3 – Contribution
-
+- Manal Ulde – Report Generation Feature 
+- Amey Zode – Attendance Sheet Generation Feature
+- Nancy Verma – Flyer Generation Feature
+- Rushabh Singh – Flyer Generation Feature
+- Aakash  Valliyil – Proposal Generation Feature   
+- Pranav Tahsildar – Proposal Generation Feature  
+- Sneha Yadav –  Team member, Project details page and Timeline Feature
+- Yashika Singh – Frontend, Authentication Development and Budget Feature
+- Aryan Yadav – Budget Preparation Feature
+- Yedhukrishna Vijayan –  Team member, Project details page and Events Integration Feature
+- Vijayraghavan Udaiyar – Feedback System and Deployment of Project 
 ---
 
 ## 📚 References

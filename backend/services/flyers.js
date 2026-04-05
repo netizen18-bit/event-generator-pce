@@ -12,11 +12,9 @@ const POLLINATIONS_IMAGE_ENDPOINTS = [
     baseUrl: "https://image.pollinations.ai/prompt",
   },
 ];
-const POLLINATIONS_PRIMARY_MODEL = config.pollinationsModel || "flux";
-const POLLINATIONS_FALLBACK_MODELS = ["flux"];
-const POLLINATIONS_MODEL_CANDIDATES = Array.from(
-  new Set([POLLINATIONS_PRIMARY_MODEL, ...POLLINATIONS_FALLBACK_MODELS].filter(Boolean))
-);
+const POLLINATIONS_FORCED_MODEL = "flux";
+const POLLINATIONS_MODEL_CANDIDATES = [POLLINATIONS_FORCED_MODEL];
+const POLLINATIONS_FULL_FLYER_MODEL_CANDIDATES = [POLLINATIONS_FORCED_MODEL];
 const POLLINATIONS_MAX_ATTEMPTS = 3;
 
 export const themes = [
@@ -62,6 +60,14 @@ const normalizePromptField = (value, maxLength = 220) =>
     .trim()
     .slice(0, maxLength);
 
+const toBulletLines = (value, maxItems = 7, maxLength = 120) =>
+  String(value || "")
+    .split(/\n|\u2022|•|;/)
+    .map((item) => item.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, maxItems)
+    .map((item) => `- ${item.slice(0, maxLength)}`);
+
 export const buildFlyerPrompt = (payload) => {
   const theme = themes.includes(payload.theme) ? payload.theme : themes[0];
   const style = payload.style || "Minimal Modern";
@@ -73,22 +79,28 @@ export const buildFlyerPrompt = (payload) => {
   const clubLogoPath = normalizePromptField(payload.clubLogoPath || "", 180);
 
   return `
-Vertical event flyer background for a college event poster.
+Generate only the BACKGROUND artwork for a vertical college event poster (2:3 aspect ratio).
 Theme: ${theme}.
 Style direction: ${style}.
 Event focus: ${eventTitle} by ${clubName} at ${venue} in ${collegeName}.
 ${themeKeywords[theme] || ""}.
 ${styleKeywords[style] || ""}.
-Keep a clean header strip and reserve top-left and top-right circular logo safe zones for official college and club logos.
+Follow this composition blueprint used by the app layout:
+- Keep a calm bright top strip and reserve top-left and top-right circular logo safe zones.
+- Keep an upper-middle clean headline-safe area for a large event title overlay.
+- Keep a lower-middle clean rectangular safe zone for a translucent details card overlay.
+- Keep the bottom strip clean for date, venue, and contact footer text overlay.
+Concentrate richer visual detail mostly on the right side and lower-right corner so the left and center remain readable.
 Brand assets to accommodate in composition: ${collegeLogoPath || "college logo"} and ${clubLogoPath || "club logo"}.
 Keep the center area visually rich but not cluttered so title and details overlay remain highly readable.
-Visual cues to include: programming workshop vibe, laptop setup, coding symbols, collaborative student environment.
+Visual cues to include: abstract futuristic technical graphics, circuit traces, polygon meshes, light data-flow lines, subtle neon accents.
 Bright, high-key lighting with rich visual depth.
 Keep center and top-middle areas readable for headline text overlays.
 Use cinematic composition, premium quality, sharp details, and print-ready composition.
 No text, no letters, no typography, no numbers, no logos, no watermark, no random characters, no gibberish.
-No signs, no posters, no banners, no UI text, no readable code on laptop screens.
-If monitors are present, keep screen content abstract and blurred without any characters.
+No signs, no posters, no banners, no UI text, no interface panels, no infographics.
+No people, no faces, no laptop screens, no monitors, no keyboards, no paper documents.
+Avoid any object that typically carries readable text.
 `.trim();
 };
 
@@ -101,16 +113,23 @@ const buildFullFlyerPrompt = (payload) => {
   const date = normalizePromptField(payload.date || "Not specified", 80);
   const time = normalizePromptField(payload.time || "Not specified", 80);
   const venue = normalizePromptField(payload.venue || "Not specified", 120);
-  const details = normalizePromptField(payload.details || "Not specified", 300);
+  const details = normalizePromptField(payload.details || "Not specified", 420);
   const summary = normalizePromptField(payload.summary || "Not specified", 220);
   const contact = normalizePromptField(payload.contactNumbers || "Not specified", 120);
+  const detailLines = toBulletLines(details, 8, 120);
+  const detailsBlock = detailLines.length ? detailLines.join("\n") : "- Not specified";
 
   return `
-Generate a single complete vertical college flyer with clean, readable English typography.
+Create one COMPLETE vertical college event flyer image with FINAL PRINTED TEXT included in the image.
 Theme: ${theme}.
 Style: ${style}.
 ${themeKeywords[theme] || ""}.
 ${styleKeywords[style] || ""}.
+
+Canvas and quality:
+- Portrait 2:3 layout
+- High contrast, clean typography, strong readability
+- Professional poster composition with clear spacing
 
 Required layout order:
 1) Top-center: ${collegeName}
@@ -118,30 +137,34 @@ Required layout order:
 3) Main headline in very large font (once only): ${eventTitle}
 4) Mid section heading: Event Details
 5) Mid section body text (clear, readable, normal English):
-${details}
-${summary}
+${detailsBlock}
 6) Near bottom line: Date & Time: ${date} ${time} | Venue: ${venue}
-7) Bottom line: Contact: ${contact}
+7) Bottom line: Summary: ${summary}
+8) Bottom line: Contact: ${contact}
 
 Design requirements:
-- High contrast typography on clean background
-- Strong visual hierarchy and ample spacing
-- Use only the exact event text above; do not invent extra headings
-- Do not repeat the title multiple times or as a background watermark
-- Do not include any logos, emblems, badges, seals, or watermarks in the generated image
-- Keep spelling clear and legible, avoid distorted or broken words
+- Use only the exact event text above; do not invent, rewrite, or omit content
+- Keep all text in clear English and fully legible (no warped or broken letters)
+- If a line is long, wrap it to the next line with proper spacing; never distort characters
+- Keep one clean details panel in the center and a clean footer strip at the bottom
+- Do not include pseudo-text/code fragments in the background
+- No logos, emblems, badges, seals, or watermarks in generated artwork
 - No gibberish, no random symbols, no mirrored text
 - Print-ready poster quality
 `.trim();
 };
 
-const buildPollinationsUrl = (baseUrl, prompt, seed, model) => {
+const buildPollinationsUrl = (baseUrl, prompt, seed, model, options = {}) => {
+  const width = Number(options.width) > 0 ? Number(options.width) : FLYER_WIDTH;
+  const height = Number(options.height) > 0 ? Number(options.height) : FLYER_HEIGHT;
+  const enhance = options.enhance !== false;
+
   const params = new URLSearchParams({
     model,
-    width: String(FLYER_WIDTH),
-    height: String(FLYER_HEIGHT),
+    width: String(width),
+    height: String(height),
     nologo: "true",
-    enhance: "true",
+    enhance: enhance ? "true" : "false",
     private: "true",
     seed: String(seed),
   });
@@ -180,11 +203,19 @@ const isInsufficientBalanceError = (status, errorText) => {
   return status === 402 && normalized.includes("insufficient balance");
 };
 
-const getPollinationsImage = async (prompt, seed) => {
+const getPollinationsImage = async (prompt, seed, options = {}) => {
+  const modelCandidates = Array.isArray(options.modelCandidates) && options.modelCandidates.length
+    ? options.modelCandidates
+    : POLLINATIONS_MODEL_CANDIDATES;
+  const requestOptions = {
+    width: Number(options.width) > 0 ? Number(options.width) : FLYER_WIDTH,
+    height: Number(options.height) > 0 ? Number(options.height) : FLYER_HEIGHT,
+    enhance: options.enhance !== false,
+  };
   const errors = [];
   const insufficientBalanceModels = new Set();
 
-  for (const model of POLLINATIONS_MODEL_CANDIDATES) {
+  for (const model of modelCandidates) {
     let modelBlockedByBalance = false;
 
     for (const endpoint of POLLINATIONS_IMAGE_ENDPOINTS) {
@@ -193,7 +224,7 @@ const getPollinationsImage = async (prompt, seed) => {
         const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         try {
-          const response = await fetch(buildPollinationsUrl(endpoint.baseUrl, prompt, seed, model), {
+          const response = await fetch(buildPollinationsUrl(endpoint.baseUrl, prompt, seed, model, requestOptions), {
             headers: {
               Accept: "image/*",
               ...(config.pollinationsApiKey
@@ -258,9 +289,9 @@ const getPollinationsImage = async (prompt, seed) => {
     }
   }
 
-  if (insufficientBalanceModels.size === POLLINATIONS_MODEL_CANDIDATES.length) {
+  if (insufficientBalanceModels.size === modelCandidates.length) {
     throw new Error(
-      `Insufficient Pollinations balance for configured model candidates (${POLLINATIONS_MODEL_CANDIDATES.join(", "
+      `Insufficient Pollinations balance for configured model candidates (${modelCandidates.join(", "
       )}). Top up pollen or switch to a lower-cost model.`
     );
   }
@@ -277,6 +308,19 @@ const getPollinationsImage = async (prompt, seed) => {
 export const generateFlyerConcept = async (payload) => {
   const wantsFullFlyer = payload.aiMode === "full-flyer" || payload.generateFullFlyer === true;
   const prompt = wantsFullFlyer ? buildFullFlyerPrompt(payload) : buildFlyerPrompt(payload);
+  const requestOptions = wantsFullFlyer
+    ? {
+        modelCandidates: POLLINATIONS_FULL_FLYER_MODEL_CANDIDATES,
+        width: 1536,
+        height: 2304,
+        enhance: false,
+      }
+    : {
+        modelCandidates: POLLINATIONS_MODEL_CANDIDATES,
+        width: FLYER_WIDTH,
+        height: FLYER_HEIGHT,
+        enhance: true,
+      };
   const layout = {
     collegeName: payload.collegeName || "Pillai College of Engineering",
     clubName: payload.clubName || "Club Name",
@@ -289,7 +333,7 @@ export const generateFlyerConcept = async (payload) => {
 
   try {
     const seed = Number.isFinite(Number(payload.seed)) ? Number(payload.seed) : Math.floor(Math.random() * 10000000);
-    const generated = await getPollinationsImage(prompt, seed);
+    const generated = await getPollinationsImage(prompt, seed, requestOptions);
 
     return {
       prompt,
